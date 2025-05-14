@@ -16,7 +16,7 @@
             <div class="col-8">
             <div class="card border-primary">
                 <div class="card-body">
-                    <h4 class="card-title"> No Invoice:</h4>
+                    <h4 class="card-title"> No Invoice: {{ $transaksiAktif->kode }}</h4>
                     <input type="text" class="form-control" placeholder="No Invoice" wire:model.live='kode'>
                     <table class="table table-border">
                         <thead>
@@ -42,6 +42,10 @@
                                     </td>
                                     <td>{{ number_format($produk->produk->harga * $produk->jumlah, 2, '.', ',') }}
                                     </td>
+                                    <td>
+                                        <button class="btn btn-danger"
+                                        wire:click='hapusProduk{{ $produk->id }}'>Hapus</button>
+                                    </td>
                                 </tr>
                             @endforeach
                         </tbody>
@@ -55,14 +59,14 @@
                     <h4 class="card-title"> Total Biaya</h4>
                     <div class="d-flex justify-content-between">
                         <span>Rp.</span>
-                        <span>{{ number_format('9346926', 2, '.', ',')}}</span>
+                        <span>{{ number_format($totalSemuaBelanja, 2, '.', ',')}}</span>
                     </div>
                 </div>
             </div>
             <div class="card border-primary  mt-2">
                 <div class="card-body">
                     <h4 class="card-title"> Bayar</h4>
-                    <input type="number" class="form-control" placeholder="Bayar">
+                    <input type="number" class="form-control" placeholder="Bayar" wire:model.live='bayar'>
                 </div>
             </div>
              <div class="card border-primary  mt-2">
@@ -70,11 +74,26 @@
                     <h4 class="card-title"> Kembalian</h4>
                     <div class="d-flex justify-content-between">
                         <span>Rp.</span>
-                        <span>{{ number_format('9346926', 2, '.', ',')}}</span>
+                        <span>{{ number_format($kembalian, 2, '.', ',')}}</span>
                     </div>
                 </div>
             </div>
-            <button class="btn btn-success mt-2 w-100" > Bayar</button>
+            @if($bayar)
+            @if(kembalian < 0)
+            <div class="alert alert-danger mt-2">
+                <strong>Perhatian!</strong> Uang yang anda masukkan kurang dari total belanja.
+            </div>
+            @elseif(kembalian > 0)
+            <div class="alert alert-success mt-2">
+                <strong>Perhatian!</strong> Uang yang anda masukkan lebih dari total belanja.
+            </div>
+            @else
+            <div class="alert alert-success mt-2">
+                <strong>Perhatian!</strong> Uang yang anda masukkan pas dengan total belanja.
+            </div>
+            @endif
+            @endif
+            <button class="btn btn-success mt-2 w-100" wire:click='transaksiSelesai'> Bayar</button>
         </div>
         
         </div>

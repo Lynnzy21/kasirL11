@@ -9,7 +9,8 @@ use App\Models\Produk;
 
 class Transaksi extends Component
 {
-    public $kode, $total, $bayar, $kembalian, $totalSemuaBelanja;
+    public $kode, $total,  $kembalian, $totalSemuaBelanja;
+    public $bayar = 0;
     public $transaksiAktif;
 
     public function transaksiBaru()
@@ -21,11 +22,34 @@ class Transaksi extends Component
         $this->transaksiAktif->status = 'pending';
         $this->transaksiAktif->save();
     }
+    
+    public function transaksiSelesai()
+    {
+        $this->transaksiAktif->status = 'selesai';
+        $this->transaksiAktif->save();
+        $this->reset();
+        session()->flash('success', 'Transaksi berhasil di simpan.');
+        return redirect()->to('/transaksi');
+}
+
+    public function hapusProduk($id) {
+        $detil = DetilTransaksi::find($id);
+        if($detil) {
+            $produk = Produk::find($detil->produk_id);
+            $produk->stock += $detil->jumlah;
+            $produk->save();
+        }
+        $detil->delete();
+        $this->reset('kode');
+    }
 
     public function batalTransaksi() {
         if ($this->transaksiAktif) {
             $detilTransaksi = DetilTransaksi::where('transaksi_id', $this->transaksiAktif->id)->get(); 
             foreach ($detilTransaksi as $detil) {
+            $produk = Produk::find($detil->produk_id);
+            $produk->stock += $detil->jumlah;
+            $produk->save();
                 $detil->delete();
             }
             $this->transaksiAktif->delete();
@@ -51,15 +75,27 @@ class Transaksi extends Component
             ]);
             $detil->jumlah += 1;
             $detil->save();
+            $produk->stock -= 1;
+            $produk->save();
             $this->reset('kode');
         }
     }
 
+    public function updatedBayar() {
+        if($this->bayar > 0) {
+            $this->kembalian = $this->bayar - $this->totalSemuaBelanja;
+        }else {
+            $this->kembalian = 0;
+        }
+    }
     // Untuk menampilkan data pada layar
     public function render()
     {
         if($this->transaksiAktif) {
             $semuaProduk = DetilTransaksi::where('transaksi_id', $this->transaksiAktif->id)->get();
+            $this->totalSemuaBelanja = $semuaProduk->sum(function($detil) {
+                return $detil->produk->harga * $detil->jumlah;
+            });
         }else {
             $semuaProduk = [];
         }
